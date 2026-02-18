@@ -1,0 +1,335 @@
+import { useState } from 'react';
+
+const API_DECISION_REQUESTS = '/api/decision-requests';
+
+const councilMembers = [
+  'John Smith - Lead Architect',
+  'Jane Doe - Principal Engineer',
+  'Mike Johnson - Tech Lead',
+  'Sarah Wilson - Solution Architect',
+  'Tom Brown - Enterprise Architect',
+];
+
+const platformsImpacted = [
+  'Web Platform',
+  'Mobile Platform',
+  'API Gateway',
+  'Data Platform',
+  'Cloud Infrastructure',
+  'Security Platform',
+  'DevOps Platform',
+];
+
+const decisionTypes = [
+  'Technology Selection',
+  'Architecture Pattern',
+  'Integration Approach',
+  'Security Decision',
+  'Infrastructure Change',
+  'Data Architecture',
+  'API Design',
+];
+
+const defaultFormData = {
+  decisionName: '',
+  proposingMember: '',
+  platformName: '',
+  description: '',
+  objectives: '',
+  costEstimate: '',
+  platformsImpacted: '',
+  technologyCapability: '',
+  itInfrastructure: '',
+  technologyStack: '',
+  beatReference: '',
+  decisionType: '',
+};
+
+export default function NewRequest() {
+  const [formData, setFormData] = useState(defaultFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setMessage(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (
+      !formData.decisionName ||
+      !formData.proposingMember ||
+      !formData.platformName ||
+      !formData.decisionType ||
+      !formData.description ||
+      !formData.objectives ||
+      !formData.platformsImpacted
+    ) {
+      setMessage({ type: 'error', text: 'Please fill in all required fields.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch(API_DECISION_REQUESTS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          decision_name: formData.decisionName,
+          proposing_member: formData.proposingMember,
+          platform_name: formData.platformName,
+          decision_type: formData.decisionType,
+          description: formData.description,
+          objectives: formData.objectives,
+          cost_estimate: formData.costEstimate || null,
+          platforms_impacted: formData.platformsImpacted,
+          technology_capability: formData.technologyCapability || null,
+          it_infrastructure: formData.itInfrastructure || null,
+          technology_stack: formData.technologyStack || null,
+          beat_reference: formData.beatReference || null,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error((data as { message?: string }).message || data?.error || 'Failed to submit decision request.');
+      }
+
+      setMessage({ type: 'success', text: 'Your new decision request has been saved successfully.' });
+      setFormData(defaultFormData);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to submit decision request.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const formStyle: React.CSSProperties = {
+    maxWidth: 640,
+    margin: '0 auto',
+    padding: 24,
+  };
+  const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontWeight: 500 };
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: 6,
+    marginBottom: 16,
+    boxSizing: 'border-box',
+  };
+  const textareaStyle: React.CSSProperties = { ...inputStyle, minHeight: 100, resize: 'vertical' };
+  const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' };
+  const buttonPrimary: React.CSSProperties = {
+    padding: '10px 20px',
+    background: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: 6,
+    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+    marginRight: 8,
+    opacity: isSubmitting ? 0.7 : 1,
+  };
+  const buttonSecondary: React.CSSProperties = {
+    padding: '10px 20px',
+    background: 'transparent',
+    border: '1px solid #e2e8f0',
+    borderRadius: 6,
+    cursor: 'pointer',
+    marginRight: 8,
+  };
+
+  return (
+    <div style={formStyle}>
+      <h1 style={{ marginBottom: 4 }}>Create New Decision</h1>
+      <p style={{ color: '#64748b', marginBottom: 24, fontSize: 14 }}>
+        Submit a new Architecture Decision Record
+      </p>
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>New Decision Name *</label>
+          <input
+            type="text"
+            placeholder="Enter decision name"
+            value={formData.decisionName}
+            onChange={(e) => handleInputChange('decisionName', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Proposing Council Member *</label>
+          <select
+            value={formData.proposingMember}
+            onChange={(e) => handleInputChange('proposingMember', e.target.value)}
+            style={selectStyle}
+          >
+            <option value="">Select council member</option>
+            {councilMembers.map((member) => (
+              <option key={member} value={member}>
+                {member}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Platform Name *</label>
+          <input
+            type="text"
+            placeholder="Enter platform name"
+            value={formData.platformName}
+            onChange={(e) => handleInputChange('platformName', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Decision Type *</label>
+          <select
+            value={formData.decisionType}
+            onChange={(e) => handleInputChange('decisionType', e.target.value)}
+            style={selectStyle}
+          >
+            <option value="">Select decision type</option>
+            {decisionTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Decision Description *</label>
+          <textarea
+            placeholder="Provide a detailed description of the decision"
+            rows={4}
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            style={textareaStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Decision Objectives *</label>
+          <textarea
+            placeholder="List the objectives of this decision"
+            rows={4}
+            value={formData.objectives}
+            onChange={(e) => handleInputChange('objectives', e.target.value)}
+            style={textareaStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Cost Estimate</label>
+          <input
+            type="text"
+            placeholder="Enter estimated cost (e.g., $50,000)"
+            value={formData.costEstimate}
+            onChange={(e) => handleInputChange('costEstimate', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Platforms Impacted *</label>
+          <select
+            value={formData.platformsImpacted}
+            onChange={(e) => handleInputChange('platformsImpacted', e.target.value)}
+            style={selectStyle}
+          >
+            <option value="">Select impacted platforms</option>
+            {platformsImpacted.map((platform) => (
+              <option key={platform} value={platform}>
+                {platform}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Technology Capability</label>
+          <input
+            type="text"
+            placeholder="Enter technology capability"
+            value={formData.technologyCapability}
+            onChange={(e) => handleInputChange('technologyCapability', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>IT Infrastructure</label>
+          <input
+            type="text"
+            placeholder="Enter IT infrastructure details"
+            value={formData.itInfrastructure}
+            onChange={(e) => handleInputChange('itInfrastructure', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>
+            Provide details of the Technology stack the decision is implied on
+          </label>
+          <input
+            type="text"
+            placeholder="e.g., React, Node.js, PostgreSQL, AWS"
+            value={formData.technologyStack}
+            onChange={(e) => handleInputChange('technologyStack', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <label style={labelStyle}>Associated BEAT Reference</label>
+          <input
+            type="text"
+            placeholder="Enter BEAT reference number"
+            value={formData.beatReference}
+            onChange={(e) => handleInputChange('beatReference', e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        {message && (
+          <p
+            style={{
+              padding: 12,
+              borderRadius: 6,
+              marginBottom: 16,
+              background: message.type === 'error' ? '#fef2f2' : '#f0fdf4',
+              color: message.type === 'error' ? '#b91c1c' : '#166534',
+            }}
+          >
+            {message.text}
+          </p>
+        )}
+
+        <div style={{ paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
+          <button type="submit" style={buttonPrimary} disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Decision Request'}
+          </button>
+          <button type="button" style={buttonSecondary}>
+            Save as Draft
+          </button>
+          <button type="button" style={{ ...buttonSecondary, color: '#64748b' }}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
